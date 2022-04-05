@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.demo.course.data.CourseDetailsResponse;
 import com.example.demo.course.data.CourseRequest;
 import com.example.demo.course.data.CourseResponse;
 import com.example.demo.course.service.CourseService;
@@ -71,6 +72,17 @@ public class CourseController {
 		List<CourseResponse> entity = service.getCourseByTitle(title);
 
 		return new ResponseEntity<>(entity, new HttpHeaders(), HttpStatus.OK);
+	}
+
+	@GetMapping("details/{id}")
+	@Operation(summary = "Get Course Details", description = "Gets course details or given course id")
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Registration was successful,"),
+			@ApiResponse(responseCode = "200", description = "successful operation", content = @Content(schema = @Schema(implementation = CourseResponse.class))),
+			@ApiResponse(responseCode = "500", description = "Invalid id supplied") })
+	public ResponseEntity<CourseDetailsResponse> getCourseDetails(@PathVariable long id)
+			throws RecordNotFoundException {
+		CourseDetailsResponse detailsResponse = service.getCourseDetails(id);
+		return new ResponseEntity<>(detailsResponse, new HttpHeaders(), HttpStatus.OK);
 	}
 
 }

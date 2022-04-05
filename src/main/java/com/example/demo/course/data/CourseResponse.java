@@ -15,8 +15,8 @@ public class CourseResponse {
 
     private LocalDate endDate;
 
-    private String capacity;
+    private Integer capacity;
     
-    private String remaining;
+    private Integer remaining;
 
 }

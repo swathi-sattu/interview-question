@@ -29,10 +29,10 @@ public class CourseEntity {
 	private LocalDate endDate;
 
 	@Column(name = "capacity")
-	private String capacity;
+	private Integer capacity;
 
 	@Column(name = "remaining")
-	private String remaining;
+	private Integer remaining;
 
 	@Override
 	public String toString() {
