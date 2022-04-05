@@ -2,6 +2,7 @@ package com.example.demo.course.controller;
 
 import java.util.List;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
@@ -18,11 +19,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.demo.course.data.CancelParticipantEnrollmentRequest;
 import com.example.demo.course.data.CourseDetailsResponse;
+import com.example.demo.course.data.CourseRegistrationRequest;
 import com.example.demo.course.data.CourseRequest;
 import com.example.demo.course.data.CourseResponse;
+import com.example.demo.course.exceptions.CourseNotFoundException;
+import com.example.demo.course.exceptions.CourseRegistrationException;
+import com.example.demo.course.exceptions.InputValidationException;
 import com.example.demo.course.service.CourseService;
-import com.example.demo.persistence.RecordNotFoundException;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -33,7 +38,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
-@RequestMapping(produces = "application/json")
+@RequestMapping("/courses")
 @Tag(name = "Course API", description = "Course API")
 public class CourseController {
 
@@ -46,16 +51,16 @@ public class CourseController {
 	@Autowired
 	CourseService service;
 
-	@Operation(summary = "Create new Course", description = "Creates new course with given request details", tags = {
+	@Operation(summary = "Creates new Course", description = "Creates new course with given request details", tags = {
 			"contact" })
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "successful operation", content = @Content(schema = @Schema(implementation = CourseResponse.class))),
-			@ApiResponse(responseCode = "500", description = "DB not available") })
-	@PostMapping(value = "/courses")
+			@ApiResponse(responseCode = "201", description = "Created successfully", content = @Content(schema = @Schema(implementation = CourseResponse.class))),
+			@ApiResponse(responseCode = "500", description = "Internal Service Error") })
+	@PostMapping
 	@ResponseStatus(value = HttpStatus.CREATED)
-	public ResponseEntity<CourseResponse> createCourse(@RequestBody @Validated CourseRequest courseRequest)
-			throws RecordNotFoundException {
-
+	public ResponseEntity<CourseResponse> createCourse(@RequestBody @Valid CourseRequest courseRequest)
+	{
+		
 		CourseResponse courseDetails = service.createCourse(courseRequest);
 
 		return new ResponseEntity<>(courseDetails, HttpStatus.CREATED);
@@ -65,10 +70,10 @@ public class CourseController {
 	@Operation(summary = "Course by Title", description = "Gets the course details by given title", tags = { "title" })
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "successful operation", content = @Content(schema = @Schema(implementation = CourseResponse.class))),
-			@ApiResponse(responseCode = "500", description = "Invalid title supplied") })
+			@ApiResponse(responseCode = "500", description = "Internal Service Error") })
 	public ResponseEntity<List<CourseResponse>> getCourseByTitle(
 			@Parameter(description = "Title of the course cannot be empty.", required = true) @PathVariable("title") @NotNull @NotBlank String title)
-			throws RecordNotFoundException {
+	{
 		List<CourseResponse> entity = service.getCourseByTitle(title);
 
 		return new ResponseEntity<>(entity, new HttpHeaders(), HttpStatus.OK);
@@ -77,12 +82,46 @@ public class CourseController {
 	@GetMapping("details/{id}")
 	@Operation(summary = "Get Course Details", description = "Gets course details or given course id")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Registration was successful,"),
-			@ApiResponse(responseCode = "200", description = "successful operation", content = @Content(schema = @Schema(implementation = CourseResponse.class))),
-			@ApiResponse(responseCode = "500", description = "Invalid id supplied") })
+			@ApiResponse(responseCode = "200", description = "successful operation"),
+			@ApiResponse(responseCode = "500", description = "Internal Service Error") })
 	public ResponseEntity<CourseDetailsResponse> getCourseDetails(@PathVariable long id)
-			throws RecordNotFoundException {
+	{
 		CourseDetailsResponse detailsResponse = service.getCourseDetails(id);
 		return new ResponseEntity<>(detailsResponse, new HttpHeaders(), HttpStatus.OK);
+	}
+	
+	@PostMapping("/{id}/add")
+	@Operation(summary = "Course Registration", description = "Registers a participant for a course")
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Registration was successful,"),
+			@ApiResponse(responseCode = "400", description = "<name> already enrolled in course"),
+			@ApiResponse(responseCode = "400", description = "RegistrationDate is not valid"),
+			@ApiResponse(responseCode = "400", description = "Course is Full"),
+			@ApiResponse(responseCode = "404", description = "Course doesnt exist") })
+	public ResponseEntity<CourseDetailsResponse> courseRegistration(@PathVariable long id,
+			@RequestBody @Validated CourseRegistrationRequest registrationRequest) throws CourseNotFoundException, CourseRegistrationException, InputValidationException  {
+		if(!validateCourseId(id, registrationRequest.getCourseId()))
+			throw new InputValidationException("CourseIds doesnt match");
+		CourseDetailsResponse updated = service.courseRegistration(id, registrationRequest);
+		return new ResponseEntity<CourseDetailsResponse>(updated, new HttpHeaders(), HttpStatus.OK);
+	}
+
+	
+	@PostMapping("/{id}/remove")
+	@Operation(summary = "Cancel Course Enrollment", description = "Cancels the user enrollment for the given courseId")
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Cancellation was successful,"),
+			@ApiResponse(responseCode = "400", description = "RegistrationDate is not valid"),
+			@ApiResponse(responseCode = "400", description = "Course is Full"),
+			@ApiResponse(responseCode = "404", description = "Course doesnt exist") })
+	public ResponseEntity<CourseDetailsResponse> cancelEnrollment(@PathVariable long id,
+			@RequestBody @Validated CancelParticipantEnrollmentRequest cancelRequest) throws CourseNotFoundException, CourseRegistrationException, InputValidationException  {
+		if(!validateCourseId(id, cancelRequest.getCourseId()))
+			throw new InputValidationException("CourseIds doesnt match");
+		CourseDetailsResponse updated = service.cancelEnrollment(id, cancelRequest);
+		return new ResponseEntity<CourseDetailsResponse>(updated, new HttpHeaders(), HttpStatus.OK);
+	}
+	private boolean validateCourseId(long id, Long courseId) {
+		return (id == courseId);
+		
 	}
 
 }

@@ -7,15 +7,13 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 @Data
-public class CourseRequest {
-    private String title;
+public class CancelParticipantEnrollmentRequest {
+
+    private Long courseId;
 
     @JsonFormat(pattern = "yyyy-MM-dd")
-    private LocalDate startDate;
+    private LocalDate cancelDate;
 
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    private LocalDate endDate;
-
-    private Integer capacity;
+    private String name;
 
 }
