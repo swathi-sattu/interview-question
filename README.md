@@ -9,14 +9,14 @@ This is a Spring boot app for Course Registration. This API helps to
   
 <b> Prerequisite: </b>
 
-Java 8 and above
-STS or any IDE
+Java 8 and above </br>
+STS or any IDE </br>
 Maven
 
 <b> Database </b>
 h2
 
-<b> Build: Creates a docker Image with name 'course-api' </b>
+<b> Build: Creates a docker Image with name 'course-api' </b></br>
 mvn clean install -Pdocker-image
 
 <b> Run Application: </b>
