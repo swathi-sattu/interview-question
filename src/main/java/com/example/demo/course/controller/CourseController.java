@@ -2,7 +2,6 @@ package com.example.demo.course.controller;
 
 import java.util.List;
 
-import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
@@ -82,7 +81,7 @@ public class CourseController {
 		return new ResponseEntity<>(entity, new HttpHeaders(), HttpStatus.OK);
 	}
 
-	@GetMapping("details/{id}")
+	@GetMapping("/{id}")
 	@Operation(summary = "Get Course Details", description = "Gets course details or given course id")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Registration was successful,"),
 			@ApiResponse(responseCode = "200", description = "successful operation"),
