@@ -28,6 +28,7 @@ import com.example.demo.course.exceptions.CourseNotFoundException;
 import com.example.demo.course.exceptions.CourseRegistrationException;
 import com.example.demo.course.exceptions.InputValidationException;
 import com.example.demo.course.service.CourseService;
+import com.example.demo.course.util.ValidatorUtil;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -50,24 +51,26 @@ public class CourseController {
 
 	@Autowired
 	CourseService service;
+	
+	@Autowired
+	ValidatorUtil validator;
 
-	@Operation(summary = "Creates new Course", description = "Creates new course with given request details", tags = {
-			"contact" })
+	@Operation(summary = "Creates new Course", description = "Creates new course with given request details")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "201", description = "Created successfully", content = @Content(schema = @Schema(implementation = CourseResponse.class))),
 			@ApiResponse(responseCode = "500", description = "Internal Service Error") })
 	@PostMapping
 	@ResponseStatus(value = HttpStatus.CREATED)
-	public ResponseEntity<CourseResponse> createCourse(@RequestBody @Valid CourseRequest courseRequest)
+	public ResponseEntity<CourseResponse> createCourse(@RequestBody @Validated CourseRequest courseRequest) throws InputValidationException
 	{
-		
+		validator.validateCourseRequest(courseRequest);
 		CourseResponse courseDetails = service.createCourse(courseRequest);
 
 		return new ResponseEntity<>(courseDetails, HttpStatus.CREATED);
 	}
 
 	@GetMapping("/{title}")
-	@Operation(summary = "Course by Title", description = "Gets the course details by given title", tags = { "title" })
+	@Operation(summary = "Course by Title", description = "Gets the course details by given title")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "successful operation", content = @Content(schema = @Schema(implementation = CourseResponse.class))),
 			@ApiResponse(responseCode = "500", description = "Internal Service Error") })
@@ -99,8 +102,8 @@ public class CourseController {
 			@ApiResponse(responseCode = "404", description = "Course doesnt exist") })
 	public ResponseEntity<CourseDetailsResponse> courseRegistration(@PathVariable long id,
 			@RequestBody @Validated CourseRegistrationRequest registrationRequest) throws CourseNotFoundException, CourseRegistrationException, InputValidationException  {
-		if(!validateCourseId(id, registrationRequest.getCourseId()))
-			throw new InputValidationException("CourseIds doesnt match");
+		validator.validateCourseId(id, registrationRequest.getCourseId());
+		validator.validateCourseRegistrationRequest(registrationRequest);
 		CourseDetailsResponse updated = service.courseRegistration(id, registrationRequest);
 		return new ResponseEntity<CourseDetailsResponse>(updated, new HttpHeaders(), HttpStatus.OK);
 	}
@@ -114,14 +117,10 @@ public class CourseController {
 			@ApiResponse(responseCode = "404", description = "Course doesnt exist") })
 	public ResponseEntity<CourseDetailsResponse> cancelEnrollment(@PathVariable long id,
 			@RequestBody @Validated CancelParticipantEnrollmentRequest cancelRequest) throws CourseNotFoundException, CourseRegistrationException, InputValidationException  {
-		if(!validateCourseId(id, cancelRequest.getCourseId()))
-			throw new InputValidationException("CourseIds doesnt match");
+		validator.validateCourseId(id, cancelRequest.getCourseId());
+		validator.validateCancelParticipantEnrollmentRequest(cancelRequest);
 		CourseDetailsResponse updated = service.cancelEnrollment(id, cancelRequest);
 		return new ResponseEntity<CourseDetailsResponse>(updated, new HttpHeaders(), HttpStatus.OK);
-	}
-	private boolean validateCourseId(long id, Long courseId) {
-		return (id == courseId);
-		
 	}
 
 }
